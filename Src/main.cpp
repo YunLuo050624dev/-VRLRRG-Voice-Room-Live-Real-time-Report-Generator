@@ -1,3 +1,8 @@
+/*
+Copyright 2026 YunLuo
+Licensed under the Apache License, Version 2.0
+http://www.apache.org/licenses/LICENSE-2.0
+*/
 #include <windows.h>
 #include <windowsx.h>
 #include <commctrl.h>
