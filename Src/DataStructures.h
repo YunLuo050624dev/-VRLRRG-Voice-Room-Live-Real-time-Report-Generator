@@ -1,0 +1,41 @@
+#pragma once
+
+#include <windows.h>
+#include <vector>
+
+struct CounterData {
+    HWND hCurrEdit;
+    HWND hTgtEdit;
+    int incBtnId;
+    int setBtnId;
+    int currValue;
+    int tgtValue;
+};
+
+struct HostData {
+    HWND hLabel;
+    HWND hNameEdit;
+    HWND hLaxinLabel;
+    HWND hLaxinEdit;
+    HWND hLaxinBtn;
+    HWND hErxiaoLabel;
+    HWND hErxiaoEdit;
+    HWND hErxiaoBtn;
+    HWND hJianlianLabel;
+    HWND hJianlianEdit;
+    HWND hJianlianBtn;
+    HWND hSanguanLabel;
+    HWND hSanguanEdit;
+    HWND hSanguanBtn;
+    HWND hDelBtn;
+    int hostIndex;
+};
+
+extern std::vector<HostData> gHosts;
+extern CounterData gCounters[6];
+extern int gHostCount;
+extern int gBaseY;
+extern HWND gHwndMain;
+extern HWND gBtnAddHost;
+extern HWND gBtnCopy;
+extern HWND gLastCopyTimeLabel;
