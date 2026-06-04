@@ -1,0 +1,1 @@
+-e "Build/\nOut/\n.vs/\n*.user\n*.suo\n*.vcxproj.user\ncmake-build-*/\n*.dll\n*.exe\n*.pdb" 
