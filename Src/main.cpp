@@ -1,5 +1,5 @@
 // Voice Room Live Real-time Report Generator
-// IMGUI Version - v0.9.0
+// IMGUI Version - v0.9.1
 
 #include "imgui.h"
 #include "imgui_impl_win32.h"
@@ -128,10 +128,20 @@ void CopyDataToClipboard() {
     
     std::wstring output;
     
+    // Helper function to convert UTF-8 to UTF-16
+    auto utf8ToUtf16 = [](const char* utf8) -> std::wstring {
+        if (!utf8 || *utf8 == '\0') return L"";
+        int len = MultiByteToWideChar(CP_UTF8, 0, utf8, -1, NULL, 0);
+        if (len <= 1) return L""; // Only null terminator or error
+        std::wstring result(len - 1, L'\0'); // Exclude null terminator
+        MultiByteToWideChar(CP_UTF8, 0, utf8, -1, &result[0], len);
+        return result;
+    };
+    
     // Hall info
-    output += L"厅名称：" + std::wstring(gHallName, gHallName + strlen(gHallName)) + L"\r\n";
-    output += L"一麦：" + std::wstring(gYimai, gYimai + strlen(gYimai)) + L"\r\n";
-    output += L"档时：" + std::wstring(gTimeStart, gTimeStart + strlen(gTimeStart)) + L"-" + std::wstring(gTimeEnd, gTimeEnd + strlen(gTimeEnd)) + L"\r\n";
+    output += L"厅名称：" + utf8ToUtf16(gHallName) + L"\r\n";
+    output += L"一麦：" + utf8ToUtf16(gYimai) + L"\r\n";
+    output += L"档时：" + utf8ToUtf16(gTimeStart) + L"-" + utf8ToUtf16(gTimeEnd) + L"\r\n";
     
     // Counters
     output += L"喊活：" + std::to_wstring(gCounters[0].currentValue) + L"/" + std::to_wstring(gCounters[0].targetValue) + L"\r\n";
@@ -143,7 +153,7 @@ void CopyDataToClipboard() {
     
     // Host data
     for (size_t i = 0; i < gHosts.size(); i++) {
-        std::wstring hostName = std::wstring(gHosts[i].name, gHosts[i].name + strlen(gHosts[i].name));
+        std::wstring hostName = utf8ToUtf16(gHosts[i].name);
         if (hostName.empty()) {
             hostName = L"NULL";
         }
@@ -549,7 +559,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow) {
                        nullptr, nullptr, nullptr, nullptr, L"VoiceRoomReportGenerator", nullptr };
     ::RegisterClassExW(&wc);
     
-    HWND hwnd = ::CreateWindowW(wc.lpszClassName, L"语音厅群内报表生成器 Version:0.9.0 (IMGUI)", 
+    HWND hwnd = ::CreateWindowW(wc.lpszClassName, L"语音厅群内报表生成器 Version:0.9.1 (IMGUI)", 
                                  WS_OVERLAPPEDWINDOW, 100, 100, 1200, 900, 
                                  nullptr, nullptr, wc.hInstance, nullptr);
     
