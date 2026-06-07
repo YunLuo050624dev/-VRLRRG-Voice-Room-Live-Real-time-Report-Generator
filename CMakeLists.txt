@@ -13,12 +13,14 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Test build configuration (uncomment for debug, comment for release)
 add_executable(${PROJECT_NAME}
     Src/main.cpp
+    Src/settings.cpp
 )
 target_compile_definitions(${PROJECT_NAME} PRIVATE _DEBUG)
 
 # Release build configuration (uncomment for release, comment for debug)
 # add_executable(${PROJECT_NAME} WIN32
 #     Src/main.cpp
+#     Src/settings.cpp
 # )
 
 # IMGUI source files

@@ -4,6 +4,7 @@
 #include "imgui.h"
 #include "imgui_impl_win32.h"
 #include "imgui_impl_dx11.h"
+#include "settings.h"
 #include <d3d11.h>
 #include <tchar.h>
 #include <string>
@@ -30,6 +31,13 @@ void CleanupDeviceD3D();
 void CreateRenderTarget();
 void CleanupRenderTarget();
 LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+
+// Font reload function - sets flag for delayed reload
+extern float gPendingFontSize;
+
+void ReloadFont(float fontSize) {
+    gPendingFontSize = fontSize;
+}
 
 // ==============================
 // Application Data Structures
@@ -82,6 +90,12 @@ bool gShowTimePickerEnd = false;
 bool gShowHealthReminder = false;
 int gSelectedHour = 0;
 int gSelectedMinute = 0;
+
+// Font reload state
+float gPendingFontSize = 0.0f;
+
+// Settings window state
+bool gShowSettings = false;
 
 // Target dialog state
 bool gShowTargetDialog = false;
@@ -188,7 +202,19 @@ void CopyDataToClipboard() {
 // UI Rendering Functions
 // ==============================
 void RenderHallInfoSection() {
-    ImGui::SeparatorText("厅信息");
+    // Hall info section with settings button
+    float availableWidth = ImGui::GetContentRegionAvail().x;
+    
+    // Title with settings button
+    ImGui::BeginGroup();
+    ImGui::Text("厅信息");
+    ImGui::SameLine(availableWidth - 60);
+    if (ImGui::Button("设置")) {
+        gShowSettings = !gShowSettings;
+    }
+    ImGui::EndGroup();
+    
+    ImGui::Separator();
     
     // Row 1: Hall name
     ImGui::Columns(2, "hall_info_row1", false);
@@ -429,6 +455,10 @@ void RenderActionButtons() {
         ImGui::SameLine();
         ImGui::Text("%s", gLastCopyTime);
     }
+    
+    // Beta version notice
+    ImGui::Spacing();
+    ImGui::TextDisabled("测试版，不代表最终结果");
 }
 
 void RenderTimePickerDialog() {
@@ -586,6 +616,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow) {
     ImGui::StyleColorsDark();
 
     // Load custom font with Chinese support
+    // Initialize theme settings
+    SetDefaultTheme();
+    
+    // Load font
     wchar_t exePath[MAX_PATH];
     GetModuleFileNameW(NULL, exePath, MAX_PATH);
     wchar_t* lastBackslash = wcsrchr(exePath, L'\\');
@@ -599,7 +633,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow) {
     std::string fontPath(bufferSize, 0);
     WideCharToMultiByte(CP_ACP, 0, fontPathW.c_str(), -1, &fontPath[0], bufferSize, NULL, NULL);
     
-    ImFont* font = io.Fonts->AddFontFromFileTTF(fontPath.c_str(), 24.0f, nullptr, io.Fonts->GetGlyphRangesChineseFull());
+    ImFont* font = io.Fonts->AddFontFromFileTTF(fontPath.c_str(), gThemeSettings.FontSize, nullptr, io.Fonts->GetGlyphRangesChineseFull());
     if (font == nullptr) {
         LOG_ERROR("Failed to load font from data/font/Main.ttf, falling back to default font");
     } else {
@@ -609,6 +643,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow) {
     // Setup Platform/Renderer backends
     ImGui_ImplWin32_Init(hwnd);
     ImGui_ImplDX11_Init(g_pd3dDevice, g_pd3dDeviceContext);
+    
+    // Apply default theme
+    ApplyTheme();
     
     LOG_INFO("ImGui initialized");
     
@@ -633,6 +670,58 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow) {
             CreateRenderTarget();
         }
         
+        // Handle delayed font reload (disabled for now due to reload issues)
+        // if (gPendingFontSize > 0.0f) {
+        //     ImGuiIO& io = ImGui::GetIO();
+        //     
+        //     // Clear all fonts
+        //     io.Fonts->Clear();
+        //     
+        //     // Get executable path
+        //     wchar_t exePath[MAX_PATH];
+        //     GetModuleFileNameW(NULL, exePath, MAX_PATH);
+        //     wchar_t* lastBackslash = wcsrchr(exePath, L'\\');
+        //     if (lastBackslash != nullptr) {
+        //         *lastBackslash = L'\0';
+        //     }
+        //     std::wstring fontPathW = std::wstring(exePath) + L"\\data\\font\\Main.ttf";
+        //     
+        //     // Convert wide string to UTF-8
+        //     int bufferSize = WideCharToMultiByte(CP_UTF8, 0, fontPathW.c_str(), -1, NULL, 0, NULL, NULL);
+        //     std::string fontPath(bufferSize, 0);
+        //     WideCharToMultiByte(CP_UTF8, 0, fontPathW.c_str(), -1, &fontPath[0], bufferSize, NULL, NULL);
+        //     
+        //     // Log for debugging
+        //     printf("[DEBUG] Font path: %s\n", fontPath.c_str());
+        //     printf("[DEBUG] Font size: %.1f\n", gPendingFontSize);
+        //     
+        //     // Add font with new size
+        //     ImFont* font = io.Fonts->AddFontFromFileTTF(fontPath.c_str(), gPendingFontSize, nullptr, io.Fonts->GetGlyphRangesChineseFull());
+        //     
+        //     if (font == nullptr) {
+        //         printf("[DEBUG] Font load failed, using default font\n");
+        //         // Fallback: try with default font
+        //         font = io.Fonts->AddFontDefault();
+        //     } else {
+        //         printf("[DEBUG] Font loaded successfully\n");
+        //     }
+        //     
+        //     // Set as default font
+        //     io.FontDefault = font;
+        //     printf("[DEBUG] FontDefault set\n");
+        //     
+        //     // Rebuild font atlas
+        //     ImGui_ImplDX11_InvalidateDeviceObjects();
+        //     printf("[DEBUG] InvalidateDeviceObjects done\n");
+        //     io.Fonts->Build();
+        //     printf("[DEBUG] Fonts->Build() done\n");
+        //     ImGui_ImplDX11_CreateDeviceObjects();
+        //     printf("[DEBUG] CreateDeviceObjects done\n");
+        //     
+        //     gPendingFontSize = 0.0f;
+        //     printf("[DEBUG] Font reload completed\n");
+        // }
+        
         // Start ImGui frame
         ImGui_ImplDX11_NewFrame();
         ImGui_ImplWin32_NewFrame();
@@ -644,6 +733,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow) {
         ImGui::Begin("Voice Room Report Generator", nullptr, 
                      ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | 
                      ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
+        
+        // Render settings window
+        RenderSettingsWindow(&gShowSettings);
         
         // Render UI sections
         RenderHallInfoSection();

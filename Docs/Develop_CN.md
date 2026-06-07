@@ -12,6 +12,7 @@ Voice-Room-Live-Real-time-Report-Generator 是使用 **Dear ImGui** 构建的 Wi
 Voice-Room-Live-Real-time-Report-Generator/
 ├── Src/
 │   ├── main.cpp              # 主窗口和应用程序逻辑
+│   ├── settings.h/cpp        # 主题系统（颜色、字体、圆角设置）
 │   ├── DataStructures.h      # 数据结构和全局变量
 │   ├── Resource.h            # 控件 ID 和常量
 │   ├── Resource.rc           # 资源文件（图标、字体）
@@ -59,7 +60,66 @@ while (!done) {
 }
 ```
 
-### 2. 数据结构 (DataStructures.h)
+### 2. 主题系统 (settings.h/cpp)
+
+主题系统负责管理应用程序的视觉外观，包括颜色、字体大小和圆角设置。
+
+#### ThemeSettings 结构体
+
+```cpp
+struct ThemeSettings {
+    // 颜色设置
+    ImVec4 WindowBg;
+    ImVec4 ChildBg;
+    ImVec4 PopupBg;
+    ImVec4 Text;
+    ImVec4 TextDisabled;
+    ImVec4 Button;
+    ImVec4 ButtonHovered;
+    ImVec4 ButtonActive;
+    ImVec4 FrameBg;
+    ImVec4 FrameBgHovered;
+    ImVec4 FrameBgActive;
+    ImVec4 InputText;
+    ImVec4 InputBorder;
+    
+    // 字体设置
+    float FontSize;
+    const char* FontPath;
+    
+    // 圆角设置
+    float WindowRounding;
+    float FrameRounding;
+    float ButtonRounding;
+};
+```
+
+#### 主题应用逻辑
+
+主题系统会根据背景亮度自动调整文本颜色：
+
+```cpp
+// 计算颜色亮度
+float CalculateLuminance(ImVec4 color) {
+    return 0.2126f * color.x + 0.7152f * color.y + 0.0722f * color.z;
+}
+
+// 应用主题
+void ApplyTheme() {
+    ImGuiStyle& style = ImGui::GetStyle();
+    
+    // 根据背景亮度自动调整文本颜色
+    float bgLuminance = CalculateLuminance(gThemeSettings.WindowBg);
+    ImVec4 autoTextColor = (bgLuminance > 0.5f) 
+        ? ImVec4(0.0f, 0.0f, 0.0f, 1.0f)  // 浅色背景用黑色文字
+        : ImVec4(1.0f, 1.0f, 1.0f, 1.0f);  // 深色背景用白色文字
+    
+    style.Colors[ImGuiCol_Text] = autoTextColor;
+    // ... 其他样式设置
+}
+```
+
+### 3. 数据结构 (DataStructures.h)
 
 #### CounterData
 存储每个计数器的信息：
@@ -83,13 +143,13 @@ struct HostData {
 };
 ```
 
-### 3. 资源定义 (Resource.h)
+### 4. 资源定义 (Resource.h)
 
 定义所有控件 ID 和常量：
 - `MAX_HOSTS` - 最大主持数 (10)
 - `BASE_HOST_COUNT` - 初始主持数 (3)
 
-### 4. UI 区域
+### 5. UI 区域
 
 #### 厅信息区域
 ```cpp
@@ -187,6 +247,22 @@ std::wstring wstr = utf8ToUtf16(gHallName);
 
 **注意：** `MultiByteToWideChar` 返回的长度包含终止符，创建 `std::wstring` 时需要使用 `len - 1` 排除它，否则会导致字符串截断。
 
+### 自定义主题
+
+主题系统提供了以下自定义选项：
+
+1. **颜色设置**
+   - 窗口背景色
+   - 按钮颜色和悬停颜色
+
+2. **圆角设置**
+   - 窗口圆角
+   - 输入框圆角
+
+3. **自动适配**
+   - 文本颜色根据背景亮度自动切换
+   - 输入框背景色根据主背景色自动调整
+
 ## 风格指南
 
 - 使用 ImGui API 约定
@@ -255,7 +331,8 @@ ImGui::Separator();
 ```cmake
 add_executable(${PROJECT_NAME}
     Src/main.cpp
+    Src/settings.cpp    # 主题系统
     Src/Resource.rc
-    Src/MyNewFile.cpp  # 在此添加新文件
+    Src/MyNewFile.cpp   # 在此添加新文件
 )
 ```

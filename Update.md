@@ -4,6 +4,25 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.9.2] - 2026-06-08
+
+### Added
+
+- Added theme system with support for custom colors, font sizes, and rounding settings
+- Independent theme settings window, accessible via "Settings" button on the right side of the hall info section
+- Automatic text color adaptation based on background brightness (white text on dark background, black text on light background)
+- Automatic input field background color adaptation following main background color
+- Added beta version notice text
+
+### Changed
+
+- Theme system code encapsulated in separate `settings.cpp` file
+- Removed manual text color and input field background color options (now auto-adaptive)
+
+### Known Issues
+
+- Font scaling feature temporarily disabled, waiting for official fix
+
 ## [0.9.1] - 2026-06-06
 
 ### Fixed

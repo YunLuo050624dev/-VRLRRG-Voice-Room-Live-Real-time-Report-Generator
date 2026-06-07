@@ -12,6 +12,7 @@ Voice-Room-Live-Real-time-Report-Generator is a Windows desktop application buil
 Voice-Room-Live-Real-time-Report-Generator/
 ├── Src/
 │   ├── main.cpp              # Main window and application logic
+│   ├── settings.h/cpp        # Theme system (colors, fonts, rounding settings)
 │   ├── DataStructures.h      # Data structures and global variables
 │   ├── Resource.h            # Control IDs and constants
 │   ├── Resource.rc           # Resource file (icons, fonts)
@@ -59,7 +60,66 @@ while (!done) {
 }
 ```
 
-### 2. Data Structures (DataStructures.h)
+### 2. Theme System (settings.h/cpp)
+
+The theme system manages the application's visual appearance, including colors, font sizes, and rounding settings.
+
+#### ThemeSettings Structure
+
+```cpp
+struct ThemeSettings {
+    // Color settings
+    ImVec4 WindowBg;
+    ImVec4 ChildBg;
+    ImVec4 PopupBg;
+    ImVec4 Text;
+    ImVec4 TextDisabled;
+    ImVec4 Button;
+    ImVec4 ButtonHovered;
+    ImVec4 ButtonActive;
+    ImVec4 FrameBg;
+    ImVec4 FrameBgHovered;
+    ImVec4 FrameBgActive;
+    ImVec4 InputText;
+    ImVec4 InputBorder;
+    
+    // Font settings
+    float FontSize;
+    const char* FontPath;
+    
+    // Rounding settings
+    float WindowRounding;
+    float FrameRounding;
+    float ButtonRounding;
+};
+```
+
+#### Theme Application Logic
+
+The theme system automatically adjusts text color based on background brightness:
+
+```cpp
+// Calculate color luminance
+float CalculateLuminance(ImVec4 color) {
+    return 0.2126f * color.x + 0.7152f * color.y + 0.0722f * color.z;
+}
+
+// Apply theme
+void ApplyTheme() {
+    ImGuiStyle& style = ImGui::GetStyle();
+    
+    // Auto-adjust text color based on background luminance
+    float bgLuminance = CalculateLuminance(gThemeSettings.WindowBg);
+    ImVec4 autoTextColor = (bgLuminance > 0.5f) 
+        ? ImVec4(0.0f, 0.0f, 0.0f, 1.0f)  // Black text on light background
+        : ImVec4(1.0f, 1.0f, 1.0f, 1.0f);  // White text on dark background
+    
+    style.Colors[ImGuiCol_Text] = autoTextColor;
+    // ... other style settings
+}
+```
+
+### 3. Data Structures (DataStructures.h)
 
 #### CounterData
 Stores information for each counter:
@@ -83,13 +143,13 @@ struct HostData {
 };
 ```
 
-### 3. Resource Definitions (Resource.h)
+### 4. Resource Definitions (Resource.h)
 
 Defines all control IDs and constants:
 - `MAX_HOSTS` - Maximum number of hosts (10)
 - `BASE_HOST_COUNT` - Initial host count (3)
 
-### 4. UI Sections
+### 5. UI Sections
 
 #### Hall Info Section
 ```cpp
@@ -187,6 +247,22 @@ std::wstring wstr = utf8ToUtf16(gHallName);
 
 **Note:** `MultiByteToWideChar` returns length including the null terminator. Use `len - 1` when creating `std::wstring` to exclude it, otherwise the string will be truncated.
 
+### Customizing Themes
+
+The theme system provides the following customization options:
+
+1. **Color Settings**
+   - Window background color
+   - Button colors and hover states
+
+2. **Rounding Settings**
+   - Window rounding
+   - Input frame rounding
+
+3. **Auto-Adaptation**
+   - Text color automatically switches based on background brightness
+   - Input field background color automatically adjusts based on main background
+
 ## Style Guidelines
 
 - Use ImGui API conventions
@@ -255,7 +331,8 @@ The project uses CMake for building. Add new source files to `CMakeLists.txt`:
 ```cmake
 add_executable(${PROJECT_NAME}
     Src/main.cpp
+    Src/settings.cpp    # Theme system
     Src/Resource.rc
-    Src/MyNewFile.cpp  # Add new files here
+    Src/MyNewFile.cpp   # Add new files here
 )
 ```
